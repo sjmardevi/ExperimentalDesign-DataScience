@@ -1,0 +1,883 @@
+---
+title: "Does Newspaper Price Affect Readership? An Analysis of French Newspaper Readership After the Introduction of Television Advertisements"
+author: "Faria Khandaker, Asel Kushkeyeva, and Shabrina Mardevi"
+date: "03/29/2020"
+output:
+  pdf_document:
+    latex_engine: lualatex
+  html_document:
+    df_print: paged
+    
+font: 12pt
+abstract: "In this report we analyzed newspaper readerships across readers from different career groups, as well as looking at whether there was causality of changes of newspaper prices after the France's introduction to television advertisements in 1967. We found that both unit and subscription prices generally increasing trend, noticeably from 1967 onwards. We also found that there were declines over the years in readerships across all career groups except for those of Senior Executives, and little evidence of causation on readership percentages due to introduction to Television advertisements. Nevertheless, such findings may be indicative of the class response to increased paper prices and television advertisement media shift. In which, for a certain career group such as Senior Executives, increased paper prices were less likely to affect much on purchasing/reading routines, and that such group retained interests in monitoring the implications surrounding the 1967 digital media transformation."
+  
+---
+
+```{r setup, include=FALSE}
+library(here)
+library(haven)
+library(huxtable)
+library(scales)
+library(tidyverse)
+library(dbplyr)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(skimr)
+library(janitor)
+```
+
+# Introduction
+
+The glory days of print newspapers may now be things of the past. There were times where most adults and/or working members of society subscribed to home deliveries or purchased newspapers from news stands, in order to receive latest news or simply indulge in their reading daily routines of journalistic work. Other than news and column pieces, newspapers used to be sought-after medium for placing and finding advertisements. The news media landscape, nonetheless, has dramatically changed over the last few decades. Print circulation and advertisements, as the two main revenue backbones of print newspapers, have gradually been less demanding due to shifts to the digital ones.  With that, the theme of 'uncertainties' has lingered around the newspaper business throughout.
+
+In this project, we are interested to look deeper into the past of newspaper readership and business using a dataset of French newspapers between 1960 and 1974. To explore newspaper reading culture, we seek to analyse the dynamics of local and national newspaper readerships across various professional groups, namely; farmers, labourers, artisans and shopkeepers, general employees, and senior executives. We would like furthermore identify whether or not there were changes in readership percentages due to introduction of TV advertisements in 1967, as a factor behind newspaper price changes and a potential cause of shift in media engagements. Our study concludes that there is a decline in readership across the all career groups except for Senior Executives regardless of whether there was media technological shift and newspaper price increase at the time of Television advertisement introduction. Despite some evidence of causation of television advertisement introduction in readerships, this sparks two assumptions; 1.) Senior Executives possessed stronger newspaper readership culture, and 2.) the 1967 phenomenon have gathered interests of certain higher and more powerful career ranks such as senior executives. Such groups might have possessed more interests and needs in monitoring news and columns for, presumably, political and economic/business decision-makings capabilities. Through external literature review, we also could relate other historical and political factors that could potentially affect readership cultures in France.
+
+
+# Background Study and Dataset
+
+The dataset used is a replication data for the article "Newspapers in Times of Low Advertising Revenues" by Angelucci and Cagé (2019). The dataset is available at: https://www.openicpsr.org/openicpsr/project/116438/version/V1/view. The original study models the content and price outcomes of newspapers due to reductions of advertising revenues. Using the 1960-1974 French newspapers dataset they created, Angelucci and Cagé (2019) also executed a difference-in-differences analytical approach in looking at the effects of introduction of television advertisements, in which it found heavily affecting national newspapers compared to the local ones. Angelucci and Cagé (2019) identified there were less journalistic-focused contents along with decrease in subscription prices due to such change.
+
+The dataset itself consists of 1,196 rows, representing different French newspaper publication IDs in the years of 1960 to 1974. The total of 52 columns serve as data indicators for information such as year, local/national identifiers, prices, revenues, readerships, etc. The dataset was last updated on December 7th, 2019.
+
+# Analysis and Discussions
+```{r, echo=FALSE}
+newspapers <- read_dta(here::here("/116438-V1/Angelucci_Cage_AEJMicro_dataset.dta"))
+options(warn=-1)
+```
+
+```{r, echo=FALSE}
+french_papers <- janitor::clean_names(newspapers)
+```
+
+
+```{r, echo=FALSE}
+pricevsread <- newspapers%>%
+  select(ln_po_cst,
+         ln_ps_cst,
+         R_sh_pcs_agri_ipo,
+         R_sh_pcs_patron_ipo,
+         R_sh_pcs_ouvriers_ipo,
+         R_sh_pcs_cadre_ipo,
+         news_hole,
+         year,
+         id_news,
+         national,
+         R_sh_pcs_employes_ipo,
+         share_Hard)
+
+#rename columns
+
+pricevsread <- clean_names(pricevsread)
+pricevsread<-
+  pricevsread%>% 
+  rename(unit_price=ln_po_cst,
+         subs_price=ln_ps_cst,
+         farmers = r_sh_pcs_agri_ipo,
+         artisans_shopkeepers = r_sh_pcs_patron_ipo,
+         labourers = r_sh_pcs_ouvriers_ipo,
+         senior_executives = r_sh_pcs_cadre_ipo,
+         hard_new=share_hard,
+         news_content=news_hole,
+         employees = r_sh_pcs_employes_ipo
+         )
+#used to facet graphs
+pricevsread<- pricevsread%>% mutate(type=if_else(
+  national==1, "National", "Local"))
+
+#drop NAs from national column
+pricevsread <- pricevsread %>%drop_na(national)
+```
+
+We first look at the trajectories of unit and subscription prices of both local and national newspapers to identify trends and whether there were striking patterns overtime. In Figure 1 and 2, it is evident that there are general increasing trends for both unit and subscription prices, with 1967 visibly being a significant turning year. As shown by the unit price value most concentrated with plots in Figure 1, most newspapers had been relatively consistent in pricing being closely around 1 EUR or even slightly under. Nevertheless, in 1967 it shows that most newspaper prices significantly hiked up by approximately 0.25 EUR, which was unseen throughout the 6 years prior. It shows an increasing trend afterwards closing into around 1.5 EUR. The national findings, although less striking in the mode of the prices, followed this same pattern. The only difference between the two are the outliers; most of the outliers of local are placed under the most common prices, while the outliers of national newspapers are mostly on the upper ends. 
+
+Contrary to Angelucci and Cage's (2019) findings, we observed increasing patterns in prices overall. The subscription prices for local in Figure 2 follows similar price change patterns as unit prices. It was first relatively consistent between 1960 to 1966 that most newspapers subscriptions were under 1 EUR. Yet, in 1967 most were priced for 1 EUR and only went on an increasing trend afterwards. For national, the most noticeable price increase for most papers was in 1968 and remained relatively consistent through 1974. This led to the assumptions that due to the decline of advertising revenue, there might have been some decision-makings that led to increase of paper prices. This was supposedly done to cover costs and refill the loss overall revenues compared to previous years.
+
+### Figure 1. Unit Prices of Local and National Issues, French Newspapers in 1960-1974
+```{r, fig.width=5, fig.height=3, echo=FALSE}
+pricevsread$year <- as.factor(pricevsread$year)
+pricevsread$national <- as.factor(pricevsread$national)
+pricevsread%>%
+  ggplot(aes(x = year,
+             y = unit_price,
+             color = type)) +
+  geom_point() +
+  labs(x="Year", y="Unit Price (Euro)", 
+       color = "Newspapers") +
+  facet_wrap("type",nrow=2) +
+  geom_jitter() +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        text=element_text(size=10))
+```
+
+### Figure 2. Subscription Prices of Local and National Issues, French Newspapers in 1960-1974
+```{r, fig.width=5, fig.height=3, echo=FALSE}
+pricevsread$year <- as.factor(pricevsread$year)
+pricevsread$national <- as.factor(pricevsread$national)
+pricevsread%>%
+  ggplot(aes(x = year,
+             y = subs_price, colour=type)) +
+  geom_point() +
+  labs(x="Year", y="Subscription Price (Euro)",
+       colour="Newspapers") +
+  facet_wrap("type",nrow=2) +
+  geom_jitter() +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        text=element_text(size=10))
+```
+
+
+```{r, echo=FALSE}
+french_papers <-
+  french_papers %>%
+  rename(farmers = r_sh_pcs_agri_ipo,
+         artisans_shopkeepers = r_sh_pcs_patron_ipo,
+         labourers = r_sh_pcs_ouvriers_ipo,
+         senior_executives = r_sh_pcs_cadre_ipo,
+         employees = r_sh_pcs_employes_ipo) %>% 
+  select(year,
+         id_news,
+         after_national,
+         local,
+         national,
+         employees,
+         farmers,
+         artisans_shopkeepers,
+         labourers,
+         senior_executives)
+```
+
+
+```{r, echo=FALSE}
+## Filter out 1960 and 1974
+french_papers_1960 <-
+  french_papers %>%
+  filter(year == "1960")
+
+french_papers_1974 <-
+  french_papers %>%
+  filter(year == "1974")
+
+french_papers_1960_1974 <- rbind(french_papers_1960, 
+                                 french_papers_1974)
+```
+
+Next, we look at overall readerships across career groups to see general trend/pattern. In Figure 3 (Appendix B), readerships of local newspapers show slight decreases over the years prior to 1967, interestingly with a slightly more noticeable declining trend after 1967. This figure also shows that, for national, some noticeable readership fluctuations from 1967 to 1969 inclusive, followed by a generally downward trend afterwards.
+
+```{r, include=FALSE}
+
+french_papers %>%
+  mutate(type = if_else(local == 1, "Local", 
+                        "National")) %>%
+  ggplot() +
+  # labourers
+  geom_point(aes(x = year, y = labourers, 
+                 color = "Labourers"),
+             alpha = 0.5) +
+   # farmers
+  geom_point(aes(x = year, y = farmers, 
+                 color = "Farmers" ),
+             alpha = 0.5) +
+   # artisans
+  geom_point(aes(x = year, y = artisans_shopkeepers,
+                 color = "Artisans and Shopkeepers"), 
+             alpha = 0.5) +
+   # executives
+  geom_point(aes(x = year, y = senior_executives,
+                 color = "Executives"), 
+             alpha = 0.5) +
+  # employees
+  geom_point(aes(x = year, y = employees, 
+                 color = "Employees"),
+             alpha = 0.5) +
+  labs(x = "Year",
+       y = "Overall Readership (%)",
+       color = "Legend") +
+  facet_wrap(vars(type),
+               nrow = 2) +
+  theme_classic() +
+  geom_vline(xintercept = 1966.5, linetype = "dashed")+
+  theme(plot.margin = margin(1.5,1,1.5,1, "cm"), 
+        legend.position = "bottom",
+        text=element_text(size=10)) +
+  scale_color_manual(values = c("Farmers" = "black",
+                                "Labourers" = "blue",
+                                "Artisans and Shopkeepers" =
+                                  "green",
+                                "Executives" = "red",
+                                "Employees" = "purple"))
+```
+
+In this figure, we also observed that the most prominent readers of of local news are labourers (please also refer to Figure 9 in Appendix A), followed by farmers (Figure 5, Appendix A). As for national news, labourers still held higher percentages although not as striking. The main difference is that senior executives had more readerships (on par or slightly below employees), which could be explained by the potential higher numbers of such professional group in urban areas as well as their higher interest in national news. Such findings could be further explained by Table 1 (Appendix B), as we found that the career group with highest percentage of readership on average is labourers, then followed by employees, farmers, senior executives, and artisans & shopkeepers, respectively.
+
+This shows that readership by career groups vary depending on geographical locations and respective socio-economic interests. Local news were probably of interest in comparison to national news for labourers and farmers, especially if they were located in rural areas. Administrative aspects of distribution of national newspapers in non-major urban areas (e.g. rurals or cities other than Paris or Lyon) might play a role in low national newspapers popularity. Angelucci and Cage (2019) mentioned that national newspapers required transfer by train from printing facilities in Paris to provincial towns, which caused some concerns on train rates and postages. However, we also see that across all careers except for Senior Executives, there are declining readership trends (Figures 5 to 9, Appendix A). Senior Executives remain consistent for local, with spike and fluctuations for national newspapers by 1970 onwards (Figure 6, Appendix A).
+
+```{r, include = FALSE}
+
+french_papers_1960_1974 %>%
+  pivot_longer(cols = c(farmers, artisans_shopkeepers, labourers,
+                        senior_executives, employees),
+               names_to = "occupation",
+               values_to = "percentage") %>%
+  group_by(occupation) %>%
+  summarise(min = min(percentage, na.rm = TRUE) %>% round(digits = 2),
+            mean = mean(percentage, na.rm = TRUE) %>% round(digits = 2),
+            median = median(percentage, na.rm = TRUE) %>% round(digits = 2),
+            max = max(percentage, na.rm = TRUE) %>% round(digits = 2),
+            sd = sd(percentage, na.rm = TRUE) %>% round(digits = 2))
+```
+
+We took 1960 as the year for newspapers readership before television advertising took in effect (control), and 1974 after it did (treatment). In Figure 4, we see that there is general decline overall except for Senior executive readerships in local news and some national news. In general, declines seemed to occur for about 10% or less. Interestingly, national readership of employees generally declined for about 20%, which was doubled the others.
+
+### Figure 4. Difference-In-Difference of Readerships of All Careers, French Newspapers in 1960 and 1974
+```{r, echo=FALSE}
+french_papers_1960_1974$national <- 
+  as.factor(french_papers_1960_1974$national)
+french_papers_1960_1974$year <- 
+  as.factor(french_papers_1960_1974$year)
+
+french_papers_1960_1974$national <- 
+  as.factor(french_papers_1960_1974$national)
+french_papers_1960_1974$year <- 
+  as.factor(french_papers_1960_1974$year)
+
+french_papers_1960_1974 %>% 
+ pivot_longer(cols = c(farmers, 
+                       artisans_shopkeepers, 
+                       labourers, 
+                       senior_executives, 
+                       employees),
+              names_to = "occupation",
+              values_to = "percentage") %>% 
+ ggplot(aes(x = year,
+            y = percentage,
+            color = national)
+        ) +
+ geom_point(alpha = 0.5) +
+ geom_line(aes(group = id_news), alpha = .3) +
+ facet_wrap(vars(occupation)) +
+ labs(x = "Year",
+      y = "Readership %",
+      color = "Local(0) and National(1)") +
+ theme_light() +
+ scale_color_brewer(palette = "Set1") +
+ theme(plot.margin = margin(1.5,1,1.5,1, "cm"),
+       legend.position = "bottom",
+       text=element_text(size=10))
+```
+\newpage
+
+## Model
+
+
+$$ln(y_{n,t})=\beta_{0}+\beta_{1}(NationalXAfter1967)+\tau_{n}+\upsilon_{y}+\epsilon $$
+The above is the model we are aiming to estimate. We assigned $\tau_{n}$ as a fixed effect for each independent newspaper, and the $\upsilon_{y}$ as a fixed effect for each independent year. With a few different dependent variables, we ran a simple linear regression analysis. For that, the $\beta_{1}$ was the coefficient we are interested in.
+
+Based on Table 2, it shows that readerships did change after television advertisement took in effect. There were some increases in national readerships for labourers, farmers, and executives, which explained the aforementioned 1967-1969 fluctuations. However, employees took a drastic drop in readership by declining by -9.3154%. Nevertheless, we see that there is general trend of decline every year. Table 2 also shows that there was general yearly trend of declines amongst Farmers for -0.4664%, Labourers for 0.2261%, Artisans/Shopkeepers for 0.1268%, and Employees for 0.4162% (with Farmers, Artisans/Shopkeepers, and Employees having confidence interval of 99.99%). For executives, uniquely, readership slightly increases (close to remaining unchanged) by 0.0025% per year.
+
+### Table 2. Regression Analysis of Readerships Across Different Careers Over the Years, French Newspapers in 1960-1974
+
+```{r, echo=FALSE}
+farmers_lm <- lm(farmers ~ after_national + id_news + year,
+                 data = french_papers)
+labourers_lm <- lm(labourers ~ after_national + 
+                     id_news + year,
+                   data = french_papers)
+artis_shop_lm <- lm(artisans_shopkeepers ~ after_national + 
+                      id_news + year,
+                    data = french_papers)
+executives_lm <- lm(senior_executives ~ after_national + 
+                      id_news + year,
+                    data = french_papers)
+employees_lm <- lm(employees ~ after_national + id_news + 
+                     year,
+                   data = french_papers)
+reg_table <-huxreg("Farmers" = farmers_lm,
+       "Labourers" = labourers_lm,
+       "Artisans/Shopkeepers" = artis_shop_lm,
+       "Employees" = employees_lm,
+       "Executives" = executives_lm,
+        number_format = 4)
+huxtable::position(reg_table) <- "left"
+reg_table
+
+```
+
+Such findings showed that there were temporary fluctuations of readership percentages caused by French implementation of television advertisements nationally. Nevertheless, over the years, readerships declined anyway for most other than senior executives group. It is very important to look at context beyond pre or post TV ads era. In 1967, legislative elections occurred in France, which may have sparked citizens’ general interests in monitoring the politics and campaigns. In 1968, France had a month-long protests, strikes, and demonstrations for cultural and social revolution (The New York Times, 2018). Students took to the streets to advocate for gay rights, challenge some ideological movements, as well as overall economic crisis. About 10 million workers went on strike to challenge capitalism; primarily due to cut in social security charges, despite a decade-long 50% national wealth rise and 45% comsumer prices (Workers Liberty, 2018). The year 1967 also had one of the highest unemployment in 15 years, only to be met in January 1968 with an increase of 32% (Workers Liberty, 2018). During the times in which television advertisements were announced and rolled out, the mass was either interested in monitoring and gaining information for elections, and/or perhaps sensitive to commercialism. In these years, labourers and farmers might have higher interests in learning about national news, yet general employees in urban areas developed trust issues with the government in terms of economic and political grounds. For senior executives, the price changes did not affect readership as it remained relatively constant, nevertheless they perhaps also remained interested in the news in 1967 to review and monitor economic and political potentials, as they perhaps had more deciding power. It is enlightening to see newspaper readerships through the lens of events in timely and national contexts, as it shed a light on transformation in media landscapes through the socio-economic response and historical implications.
+
+## Checking the Robustness of Analysis using Bootstrapping
+
+We checked the robustness of analysis using bootstrapping of our R-squared. This was done to show whether analysis was threatened given potentially high auto-correlations in repeated samplings. Our models in Figures 10 to 14 (Appendix B) show that the R-squared's are the same with the ones in Table 2. This successfully displayed that our models are not affected by repeated samplings.
+
+# Limitations
+
+In this dataset, we found many N/As and missing data points that prompted graph generations to drop several rows. After 1967, perhaps due to political and economic unrests in the country, there were less data points surveyed and recorded. Changes in readerships, especially declines, could also be caused by incomplete or missing data in some rows or others. A second factor as to why there missing or little data points for readerships was also that France had, in general, low newspaper sales performance and low numbers of daily newspaper readers, in comparison to numbers in Japan, UK, USA, and the Scandinavian countries (Kuhn, 1967). The fact that there might have been low numbers of readers at large, perhaps made it challenging to collect any data at all.
+
+# Ethics
+
+There are a few ethical implications that need to be considered while working with this data and its chosen variables. We have chosen variables pertaining to career groups. Such categorizations and analytical selections may easily spark discussions with views of classism tendencies. Classism, defined as social class and systematic oppression-based characterization on worth and ability, in this subject could be found in the discussions of perceiving what newspaper readership, interest, and literacy some groups may have compared to others. Not only this is unethical without further context analysis, it would be also inaccurate. For example, artisans/shopkeepers are not necessarily less wealthy or affluent than Senior Executives across the board. Artisans and shopkeepers may have included entrepreneurs and successful businesspeople.
+
+The French newspaper dataset paper often uses the terms less affluent and educated readership side by side, which assumes that the less affluent by default less educated. France’s push for higher education (baccalaureate) started in 1965 (Bellat 2015). If the dataset covers the years between 1960 and 1974, then that is a short span of time to judge the education level of people given policy changes, especially if the policy change falls within the year covered by the dataset, not before. We found that readership patterns between labourers and farmers remain at a consistent level throughout the years covered in the study. Readership patterns between senior executives and artisans/shopkeepers also appear remain fairly consistent throughout the years. From this we conclude that reading patterns are not necessarily related to economic class or affluency but rather what is relevant for the readership group. Shopkeeper and senior executives may need to keep track of global trends for their businesses. Farmers and labourers may need to know more about local policies because those will impact them directly. Our graphs also show a consistent pattern of readership between laborer’s and farmers for national newspapers, With the exception of a few years, where readership actually increased. This indicate to us that readership may not be related to economic status or education level, as much as it may be related to relevance of the information to the social group.
+
+## Times of Crisis and Sensitivity in Newspaper Industry
+It is important to be mindful and sympathetic in covering life and times of newspaper businesses where possible. Currently, it is a sensitive era for the industry, and everyone involved. A most recent example in Canada is the plan in which the Government was to provide financial support for all news media outlets, including newspapers, after major advertising revenue losses across the board due to COVID-19 pandemic (The Globe and Mail, 2020). This plan was said to have fallen short, as the President and CEO of News Media Canada stated, “this is a crisis for the industry and we need support to continue, not just rehash announcements of last year’s promises” (The Globe and Mail, 2020). 
+
+There have also been job losses in newspaper industry that had devastated many individual workers last year in Canada alone. In Fall 2019, Torstar Corporations (parent publisher of Toronto Star) laid off around more than 100 employees, as it closed some of its StarMetro operations, and posed cuts at the Hamilton Spectator and Waterloo Region Record (J-Source, 2019). And in Spring 2019, The Globe and Mail offered voluntary buyout applications eligible for all of its employees in order to reach a target budget cut of $10 million from its operations (CBC, 2019). While many had participated, it did not meet the target therefore was followed by involuntary layoffs. Since 2009, this was the fourth time the newspaper had offered voluntary buyouts (CBC, 2019).
+
+Nevertheless, it is crucially important for reports and studies such as this to be objective, data-driven, and evidence-based. Such approach is imperative to avoid bias and/or endorsing nature, particularly in referring to outcomes and conclusions that can potentially be used or misused for advocacy and/or decision-makings in the industry.
+  
+## Dataset: Modified BSD License on Redistributions and Creative Commons Attribution 4.0 International Public License
+The dataset used in this study is under the permission for use and redistribution of Modified BSD License on Redistributions. The advise generally requires conditions in which redistribution is kept under the same copyright notice, conditions, and disclaimers, and that the names of the copyright holders and contributor are not used for endorsements. 
+
+For more information on Modified BSD License on Redistributions, and all Sections of Creative Commons Attribution 4.0 International Public License, please review: https://www.openicpsr.org/openicpsr/project/116438/version/V1/view?path=/openicpsr/116438/fcr:versions/V1/LICENSE.txt&type=file#
+
+\newpage
+# References
+
+  Angelucci, C., and Cagé, J. (2019). Newspapers in Times of Low Advertising Revenues. American Economic Journal:   Microeconomics, 11(3), 319-364. Retrieved from https://doi.org/10.1257/mic.20170306
+  
+  David Hugh-Jones (2020). huxtable: Easily Create and Style Tables for LaTeX, HTML and Other Formats. R package version 4.7.1. https://CRAN.R-project.org/package=huxtable
+  
+  Dickson, Janice. (2020, March 25). Ottawa’s plan to offer support for media organizations losing ad revenue ‘falls short’, News Media Canada says. The Globe and Mail. Retrieved From
+  https://www.theglobeandmail.com/politics/article-ottawas-plan-to-offer-support-for-media-organizations-losing-ad/
+  
+  CBC. (2019, May 9). Globe and Mail offers voluntary buyouts in effort to save $10M annually. Retrieved From https://www.cbc.ca/news/business/globe-and-mail-buyouts-1.5129600
+  
+  Elin Waring, Michael Quinn, Amelia McNamara, Eduardo Arino de la Rubia, Hao Zhu and Shannon Ellis (2019). skimr: Compact and Flexible Summaries of Data. R package version 2.0.2. https://CRAN.R-project.org/package=skimr
+  
+  H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+  
+  Hadley Wickham (2019). stringr: Simple, Consistent Wrappers for Common String Operations. R package version 1.4.0. https://CRAN.R-project.org/package=stringr
+  
+  Hadley Wickham and Dana Seidel (2019). scales: Scale Functions for Visualization. R package version 1.1.0.
+  https://CRAN.R-project.org/package=scales
+  
+  Hadley Wickham and Edgar Ruiz (2019). dbplyr: A 'dplyr' Back End for Databases. R package version 1.4.2.
+  https://CRAN.R-project.org/package=dbplyr
+  
+  Hadley Wickham and Evan Miller (2019). haven: Import and Export 'SPSS', 'Stata' and 'SAS' Files. R package
+  version 2.2.0. https://CRAN.R-project.org/package=haven
+  
+  Hadley Wickham and Lionel Henry (2019). tidyr: Tidy Messy Data. R package version 1.0.0.
+  https://CRAN.R-project.org/package=tidyr
+  
+  Duru-Bellat, M. (2015). Access to Higher Education: The French case. 
+  Retrieved from ffhalshs-01103597f
+  
+  Wechsler, S. (2019, Nov 19). TORSTAR Cuts more than 100 Jobs. J-Source. Retrieved From
+  https://j-source.ca/article/torstar-cuts-more-than-100-jobs/
+  
+  Kirill Müller (2017). here: A Simpler Way to Find Your Files. R package version 0.1.
+  https://CRAN.R-project.org/package=here
+  
+  Wickham et al., (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43), 1686,
+  https://doi.org/10.21105/joss.01686
+  
+  Sam Firke (2019). janitor: Simple Tools for Examining and Cleaning Dirty Data. R package version 1.2.0. https://CRAN.R-project.org/package=janitor
+
+\newpage
+# Appendix A: Codes
+
+### Data preparation
+
+The dataset is available at: https://www.openicpsr.org/openicpsr/project/116438/version/V1/view.
+
+```{r}
+library(here)
+library(haven)
+library(huxtable)
+library(scales)
+library(tidyverse)
+library(dbplyr)
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(skimr)
+library(janitor)
+```
+
+```{r}
+french_papers <- janitor::clean_names(newspapers)
+```
+
+
+```{r new table for new analysis}
+pricevsread <- newspapers%>%
+  select(ln_po_cst,
+         ln_ps_cst,
+         R_sh_pcs_agri_ipo,
+         R_sh_pcs_patron_ipo,
+         R_sh_pcs_ouvriers_ipo,
+         R_sh_pcs_cadre_ipo,
+         news_hole,
+         year,
+         id_news,
+         national,
+         R_sh_pcs_employes_ipo,
+         share_Hard)
+
+#rename columns
+
+pricevsread <- clean_names(pricevsread)
+pricevsread<-
+  pricevsread%>% 
+  rename(unit_price=ln_po_cst,
+         subs_price=ln_ps_cst,
+         farmers = r_sh_pcs_agri_ipo,
+         artisans_shopkeepers = r_sh_pcs_patron_ipo,
+         labourers = r_sh_pcs_ouvriers_ipo,
+         senior_executives = r_sh_pcs_cadre_ipo,
+         hard_new=share_hard,
+         news_content=news_hole,
+         employees = r_sh_pcs_employes_ipo
+         )
+#used to facet graphs
+pricevsread<- pricevsread%>% mutate(type=if_else(
+  national==1, "National", "Local"))
+
+#drop NAs from national column
+pricevsread <- pricevsread %>%drop_na(national)
+```
+
+```{r dataset assignment}
+french_papers <-
+  french_papers %>%
+  rename(farmers = r_sh_pcs_agri_ipo,
+         artisans_shopkeepers = r_sh_pcs_patron_ipo,
+         labourers = r_sh_pcs_ouvriers_ipo,
+         senior_executives = r_sh_pcs_cadre_ipo,
+         employees = r_sh_pcs_employes_ipo) %>% 
+  select(year,
+         id_news,
+         after_national,
+         local,
+         national,
+         employees,
+         farmers,
+         artisans_shopkeepers,
+         labourers,
+         senior_executives)
+```
+
+
+```{r merging}
+## Filter out 1960 and 1974
+french_papers_1960 <-
+  french_papers %>%
+  filter(year == "1960")
+
+french_papers_1974 <-
+  french_papers %>%
+  filter(year == "1974")
+
+french_papers_1960_1974 <- rbind(french_papers_1960, 
+                                 french_papers_1974)
+```
+
+\newpage
+# Appendix B: Tables and Figures
+
+### Figure 1. Unit Prices of Local and National Issues, French Newspapers in 1960-1974
+```{r price vs readership}
+pricevsread$year <- as.factor(pricevsread$year)
+pricevsread$national <- as.factor(pricevsread$national)
+pricevsread%>%
+  ggplot(aes(x = year,
+             y = unit_price,
+             color = type)) +
+  geom_point() +
+  labs(x="Year", y="Unit Price (Euro)", 
+       color = "Newspapers") +
+  facet_wrap("type",nrow=2) +
+  geom_jitter() +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+### Figure 2. Subscription Prices of Local and National Issues, French Newspapers in 1960-1974
+```{r}
+pricevsread$year <- as.factor(pricevsread$year)
+pricevsread$national <- as.factor(pricevsread$national)
+pricevsread%>%
+  ggplot(aes(x = year,
+             y = subs_price, colour=type)) +
+  geom_point() +
+  labs(x="Year", y="Subscription Price (Euro)",
+       colour="Newspapers") +
+  facet_wrap("type",nrow=2) +
+  geom_jitter() +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+### Figure 3. Overall Percent Local and National Readerships for All Career Groups, French Newspapers in 1960-1974
+```{r}
+
+french_papers %>%
+  mutate(type = if_else(local == 1, "Local", 
+                        "National")) %>%
+  ggplot() +
+  # labourers
+  geom_point(aes(x = year, y = labourers, 
+                 color = "Labourers"),
+             alpha = 0.5) +
+   # farmers
+  geom_point(aes(x = year, y = farmers, 
+                 color = "Farmers" ),
+             alpha = 0.5) +
+   # artisans
+  geom_point(aes(x = year, y = artisans_shopkeepers,
+                 color = "Artisans and Shopkeepers"), 
+             alpha = 0.5) +
+   # executives
+  geom_point(aes(x = year, y = senior_executives,
+                 color = "Senior Executives"), 
+             alpha = 0.5) +
+  # employees
+  geom_point(aes(x = year, y = employees, 
+                 color = "Employees"),
+             alpha = 0.5) +
+  labs(x = "Year",
+       y = "Overall Readership (%)",
+       color = "Legend") +
+  facet_wrap(vars(type),
+               nrow = 2) +
+  theme_classic() +
+  geom_vline(xintercept = 1966.5, linetype = "dashed")+
+  theme(plot.margin = margin(1.5,1,1.5,1, "cm"), 
+        legend.position = "bottom",
+        text=element_text(size=10)) +
+  scale_color_manual(values = c("Farmers" = "black",
+                                "Labourers" = "blue",
+                                "Artisans and Shopkeepers" =
+                                  "green",
+                                "Senior Executives" = "red",
+                                "Employees" = "purple"))
+```
+
+\newpage
+
+### Figure 4. Difference-In-Differences of Readerships of All Careers, French Newspapers in 1960 and 1974
+```{r}
+french_papers_1960_1974$national <- 
+  as.factor(french_papers_1960_1974$national)
+french_papers_1960_1974$year <- 
+  as.factor(french_papers_1960_1974$year)
+
+french_papers_1960_1974$national <- 
+  as.factor(french_papers_1960_1974$national)
+french_papers_1960_1974$year <- 
+  as.factor(french_papers_1960_1974$year)
+
+french_papers_1960_1974 %>% 
+ pivot_longer(cols = c(farmers, 
+                       artisans_shopkeepers, 
+                       labourers, 
+                       senior_executives, 
+                       employees),
+              names_to = "occupation",
+              values_to = "percentage") %>% 
+ ggplot(aes(x = year,
+            y = percentage,
+            color = national)
+        ) +
+ geom_point(alpha = 0.5) +
+ geom_line(aes(group = id_news), alpha = .3) +
+ facet_wrap(vars(occupation)) +
+ labs(x = "Year",
+      y = "Readership %",
+      color = "Local(0) and National(1)") +
+ theme_light() +
+ scale_color_brewer(palette = "Set1") +
+ theme(plot.margin = margin(1.5,1,1.5,1, "cm"), 
+       legend.position = "bottom")
+
+
+```
+
+### Figure 5. Percent Farmers Readership, French Newspapers 1960-1974
+```{r}
+french_papers %>%
+  mutate(type = if_else(local == 1, 
+                        "Local", "National")) %>%
+  ggplot(aes(x = year, y = farmers)) +
+  geom_point(alpha = 0.5) +
+  labs(x = "Year",
+       y = "Farmers Readership %") +
+  facet_wrap(vars(type),
+               nrow = 2) +
+  theme_classic() +
+  geom_vline(xintercept = 1966.5, 
+             linetype = "dashed")+
+  theme(plot.margin = 
+          margin(1.5,1,1.5,1, "cm"))
+
+```
+
+### Figure 6. Percent Senior Executive Readership, French Newspapers 1960-1974
+```{r}
+french_papers %>%
+  mutate(type = if_else(local == 1, 
+                        "Local", "National")) %>%
+  ggplot(aes(x = year, y = senior_executives)) +
+  geom_point(alpha = 0.5) +
+  labs(x = "Year",
+       y = "Senior Executives Readership %") +
+  facet_wrap(vars(type),
+               nrow = 2) +
+  theme_classic() +
+  geom_vline(xintercept = 1966.5, linetype = 
+               "dashed")+
+  theme(plot.margin = margin(1.5,1,1.5,1, "cm"))
+
+```
+
+### Figure 7. Percent Artisans and Shopkeepers, French Newspapers 1960-1974
+```{r}
+french_papers %>%
+  mutate(type = if_else(local == 1, 
+                        "Local", "National")) %>%
+  ggplot(aes(x = year, y = artisans_shopkeepers)) +
+  geom_point(alpha = 0.5) +
+  labs(x = "Year",
+       y = "Artisans and Shopkeepers
+       Readership %") +
+  facet_wrap(vars(type),
+               nrow = 2) +
+  theme_classic() +
+  geom_vline(xintercept = 1966.5, 
+             linetype = "dashed")+
+  theme(plot.margin = margin(1.5,1,1.5,1, "cm"))
+
+```
+
+### Figure 8. Percent Employees Readership, French Newspapers 1960-1974
+```{r}
+french_papers %>%
+  mutate(type = if_else(local == 1, 
+                        "Local", "National")) %>%
+  ggplot(aes(x = year, y = employees)) +
+  geom_point(alpha = 0.5) +
+  labs(x = "Year",
+       y = "Employees
+       Readership %") +
+  facet_wrap(vars(type),
+               nrow = 2) +
+  theme_classic() +
+  geom_vline(xintercept = 1966.5,
+             linetype = "dashed")+
+  theme(plot.margin = 
+          margin(1.5,1,1.5,1, "cm"))
+
+```
+
+### Figure 9. Percent Labourers Readership, French Newspapers 1960-1974
+```{r}
+french_papers %>%
+  mutate(type = if_else(local == 1, 
+                        "Local", "National")) %>%
+  ggplot(aes(x = year, y = labourers)) +
+  geom_point(alpha = 0.5) +
+  labs(x = "Year",
+       y = "Labourers Readership %") +
+  facet_wrap(vars(type),
+               nrow = 2) +
+  theme_classic() +
+  geom_vline(xintercept = 1966.5, 
+             linetype = "dashed")+
+  theme(plot.margin = margin(1.5,1,1.5,1, "cm"))
+```
+
+### Figure 10. R-Squared Bootstrapping - Farmers Readership
+```{r}
+###Bootstrap 95% CI for R-Squared
+library(boot)
+# function to obtain R-Squared from the data 
+rsq_farm <- function(formula, data, indices) {
+  d <- data[indices,] # allows boot to select sample 
+  fit <- lm(formula, data=d)
+  return(summary(fit)$r.square)
+} 
+###bootstrapping with 2000 replications 
+results_farm <- boot(data=french_papers, 
+                     statistic=rsq_farm, 
+   R=2000, formula = farmers ~ id_news + 
+     year + after_national)
+
+###view results
+results_farm 
+
+
+###get 95% confidence interval 
+boot.ci(results_farm)
+
+```
+
+```{r}
+plot(results_farm)
+```
+
+### Figure 11. R-Squared Bootstrapping - Labourers Readership
+```{r}
+###Bootstrap 95% CI for R-Squared
+# function to obtain R-Squared from the data 
+rsq_lab <- function(formula, data, indices) {
+  d <- data[indices,] # allows boot to select sample 
+  fit <- lm(formula, data=d)
+  return(summary(fit)$r.square)
+} 
+###bootstrapping with 2000 replications 
+results_lab <- boot(data=french_papers, 
+                    statistic=rsq_lab, 
+   R=2000, formula = labourers ~ id_news + 
+     year + after_national)
+
+###view results
+results_lab 
+
+
+###get 95% confidence interval 
+boot.ci(results_lab)
+
+```
+
+```{r}
+plot(results_lab)
+```
+
+
+### Figure 12. R-Squared Bootstrapping - Artisans & Shopkeepers Readership
+
+```{r}
+###Bootstrap 95% CI for R-Squared
+library(boot)
+# function to obtain R-Squared from the data 
+rsq_art <- function(formula, data, indices) {
+  d <- data[indices,] # allows boot to select sample 
+  fit <- lm(formula, data=d)
+  return(summary(fit)$r.square)
+} 
+###bootstrapping with 2000 replications 
+results_art <- boot(data=french_papers, 
+                    statistic=rsq_art, 
+   R=2000, formula = artisans_shopkeepers ~ 
+     id_news + year + after_national)
+
+###view results
+results_art 
+
+
+###get 95% confidence interval 
+boot.ci(results_art)
+
+```
+
+```{r}
+plot(results_art)
+```
+
+### Figure 13. R-Squared Bootstrapping - Employees Readership
+
+```{r}
+###Bootstrap 95% CI for R-Squared
+# function to obtain R-Squared from the data 
+rsq_empl <- function(formula, data, indices) {
+  d <- data[indices,] # allows boot to select sample 
+  fit <- lm(formula, data=d)
+  return(summary(fit)$r.square)
+} 
+###bootstrapping with 2000 replications 
+results_empl <- boot(data=french_papers, 
+                     statistic=rsq_empl, 
+   R=2000, formula = employees ~ 
+     id_news + year + after_national)
+
+###view results
+results_empl 
+
+
+###get 95% confidence interval 
+boot.ci(results_empl)
+
+```
+
+```{r}
+plot(results_empl)
+```
+
+### Figure 14. R-Squared Bootstrapping - Senior Executives Readership
+```{r}
+# function to obtain R-Squared from the data 
+rsq_exec <- function(formula, data, indices) {
+  d <- data[indices,] # allows boot to select sample 
+  fit <- lm(formula, data=d)
+  return(summary(fit)$r.square)
+} 
+### bootstrapping with 2000 replications 
+results_exec <- boot(data=french_papers, 
+                     statistic=rsq_exec, R=2000, 
+                     formula = senior_executives ~ 
+                       id_news + year + after_national)
+
+### view results
+results_exec
+
+### get 95% confidence interval 
+boot.ci(results_exec)
+```
+
+```{r}
+plot(results_exec)
+```
+
+### Table 1. Summary Statistics Table for Readerships of All Career Groups 
+```{r}
+french_papers_1960_1974 %>%
+  pivot_longer(cols = c(farmers, 
+                        artisans_shopkeepers, 
+                        labourers,
+                        senior_executives, 
+                        employees),
+               names_to = "occupation",
+               values_to = "percentage") %>%
+  group_by(occupation) %>%
+  summarise(min = min(percentage, na.rm = TRUE) %>% 
+              round(digits = 2),
+            mean = mean(percentage, na.rm = TRUE) %>% 
+              round(digits = 2),
+            median = median(percentage, na.rm = TRUE) %>% 
+              round(digits = 2),
+            max = max(percentage, na.rm = TRUE) %>% 
+              round(digits = 2),
+            sd = sd(percentage, na.rm = TRUE) %>% 
+              round(digits = 2))
+```
+
+### Table 2. Regression Analysis of Readerships Across Different Careers Over the Years, French Newspapers in 1960-1974
+```{r}
+farmers_lm <- lm(farmers ~ after_national + 
+                   id_news + year,
+                 data = french_papers)
+labourers_lm <- lm(labourers ~ after_national + 
+                     id_news + year,
+                   data = french_papers)
+artis_shop_lm <- lm(artisans_shopkeepers ~ after_national + 
+                      id_news + year,
+                    data = french_papers)
+executives_lm <- lm(senior_executives ~ after_national + 
+                      id_news + year,
+                    data = french_papers)
+employees_lm <- lm(employees ~ after_national + id_news + 
+                     year,
+                   data = french_papers)
+reg_table <-huxreg("Farmers" = farmers_lm,
+       "Labourers" = labourers_lm,
+       "Artisans/Shopkeepers" = artis_shop_lm,
+       "Employees" = employees_lm,
+       "Executives" = executives_lm,
+        number_format = 4)
+huxtable::position(reg_table) <- "left"
+reg_table
+```
